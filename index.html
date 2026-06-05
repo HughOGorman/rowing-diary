@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HOG Diary">
+<title>HOG // Rowing Diary</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --maroon:#7a1840;--maroon2:#8f1e4a;--maroon3:#5c1030;--maroon4:#3d0a20;
+  --cream:#f5f0eb;--cream2:#ede5db;--cream3:#d9cfc4;--white:#ffffff;
+  --text:#2a0d18;--text2:#5c1030;--muted:#9b7080;--border:#c4879f;--border2:#e8c4d0;
+  --green:#2e7d52;--red:#c0392b;--blue:#1a5276;--amber:#b8860b;
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--cream);color:var(--text);font-family:'Barlow',sans-serif;display:flex;flex-direction:column}
+.top-bar{background:var(--maroon);border-bottom:3px solid var(--maroon3);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0}
+.logo{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;letter-spacing:0.1em;color:var(--cream);white-space:nowrap}
+.clock-block{text-align:center;flex:1}
+.clock-time{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--cream);letter-spacing:0.08em;line-height:1}
+.clock-date{font-size:11px;color:var(--cream2);margin-top:2px;letter-spacing:0.03em}
+.meta{font-size:12px;color:var(--cream2);text-align:right;line-height:1.4;white-space:nowrap}
+.meta strong{color:var(--white);font-weight:600}
+.tabs{display:flex;background:var(--maroon3);border-bottom:2px solid var(--maroon4);padding:0 16px;overflow-x:auto;flex-shrink:0;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:10px 14px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.06em;color:var(--cream3);cursor:pointer;border-bottom:3px solid transparent;transition:all 0.2s;text-transform:uppercase;white-space:nowrap;flex-shrink:0}
+.tab.active{color:var(--cream);border-bottom-color:var(--cream)}
+.main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.content{padding:16px;max-width:900px;margin:0 auto}
+.section{display:none}.section.active{display:block}
+.page-title{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--maroon);margin-bottom:3px;letter-spacing:0.05em}
+.page-sub{font-size:12px;color:var(--muted);margin-bottom:16px}
+.card{background:var(--white);border:1px solid var(--border2);border-radius:8px;padding:14px;margin-bottom:14px}
+.card-title{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:var(--maroon);margin-bottom:10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.field{margin-bottom:9px}
+.field label{font-size:11px;color:var(--muted);display:block;margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em}
+.field input,.field select,.field textarea{width:100%;background:var(--cream);border:1px solid var(--border2);border-radius:5px;padding:7px 10px;color:var(--text);font-family:'Barlow',sans-serif;font-size:14px;outline:none;transition:border 0.2s;-webkit-appearance:none}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--maroon)}
+.field textarea{resize:vertical;min-height:55px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.row4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px}
+.btn{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:9px 16px;border-radius:5px;border:none;cursor:pointer;font-size:13px;transition:all 0.2s}
+.btn-primary{background:var(--maroon);color:var(--cream)}.btn-primary:active{background:var(--maroon2)}
+.btn-secondary{background:transparent;border:1px solid var(--border);color:var(--muted)}.btn-secondary:active{border-color:var(--maroon);color:var(--maroon)}
+.btn-coach{background:var(--maroon4);border:2px solid var(--maroon);color:var(--cream);width:100%;padding:11px;font-size:14px;border-radius:8px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;margin-top:4px}
+.btn-coach:active{background:var(--maroon3)}
+.session-card{background:var(--white);border:1px solid var(--border2);border-radius:8px;padding:12px}
+.session-card.complete{border-left:3px solid var(--green)}
+.session-card.skipped{border-left:3px solid var(--red)}
+.session-card.scheduled{border-left:3px solid var(--maroon)}
+.s-label{font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.s-title{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;margin-bottom:7px;color:var(--text)}
+.badge{font-size:11px;padding:3px 8px;border-radius:3px;display:inline-block;font-weight:600}
+.badge-done{background:rgba(46,125,82,0.12);color:var(--green)}
+.badge-skip{background:rgba(192,57,43,0.1);color:var(--red)}
+.badge-sched{background:rgba(122,24,64,0.1);color:var(--maroon)}
+.coach-box{background:var(--maroon4);border:2px solid var(--maroon);border-radius:8px;padding:16px;margin-top:14px}
+.coach-label{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.12em;color:var(--cream2);margin-bottom:8px}
+.coach-response{font-size:13px;line-height:1.7;color:var(--cream);white-space:pre-wrap}
+.loading-dots{display:inline-flex;gap:4px;align-items:center}
+.loading-dots span{width:5px;height:5px;border-radius:50%;background:var(--cream);animation:dot 1.2s infinite}
+.loading-dots span:nth-child(2){animation-delay:0.2s}.loading-dots span:nth-child(3){animation-delay:0.4s}
+@keyframes dot{0%,80%,100%{opacity:0.2}40%{opacity:1}}
+.stat-card{background:var(--white);border:1px solid var(--border2);border-radius:8px;padding:12px;text-align:center}
+.stat-val{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--maroon)}
+.stat-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:2px}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:3px}
+.trend{font-size:11px;font-weight:700;margin-top:2px}
+.trend.up{color:var(--green)}.trend.down{color:var(--red)}.trend.flat{color:var(--muted)}
+.chart-wrap{position:relative;height:180px;margin-top:8px}
+.chart-wrap-sm{position:relative;height:140px;margin-top:8px}
+.divider{height:1px;background:var(--border2);margin:12px 0}
+.goal-card{background:var(--white);border:1px solid var(--border2);border-radius:8px;padding:14px;margin-bottom:10px}
+.goal-cat{font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.goal-title{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;margin-bottom:3px;color:var(--text)}
+.goal-sub{font-size:12px;color:var(--muted)}
+.progress-bar{height:4px;background:var(--cream2);border-radius:2px;overflow:hidden;margin-top:8px}
+.progress-fill{height:100%;border-radius:2px;background:var(--maroon)}
+.section-head{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin:14px 0 8px}
+.day-row{background:var(--white);border:1px solid var(--border2);border-radius:6px;padding:10px 12px;display:grid;grid-template-columns:85px 1fr 1fr;gap:12px;align-items:center;margin-bottom:5px}
+.day-row.today-row{border-color:var(--maroon);border-width:2px}
+.day-name{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--text)}
+.day-name small{display:block;font-size:10px;color:var(--muted);font-family:'Barlow',sans-serif;font-weight:400}
+.pill{font-size:11px;padding:3px 8px;border-radius:3px;display:inline-block;margin:2px 0;font-weight:500}
+.pill-am{background:rgba(26,82,118,0.1);color:var(--blue)}
+.pill-pm{background:rgba(122,24,64,0.1);color:var(--maroon2)}
+.prompt-text{background:var(--cream);border:1px solid var(--border2);border-radius:6px;padding:12px;font-size:11px;line-height:1.8;color:var(--text2);white-space:pre-wrap;font-family:monospace;max-height:340px;overflow-y:auto}
+.inline-flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.lift-card{background:var(--white);border:1px solid var(--border2);border-radius:8px;padding:12px;text-align:center}
+.lift-val{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:var(--maroon)}
+.lift-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-top:2px}
+.lift-sub{font-size:11px;color:var(--muted);margin-top:3px}
+.save-indicator{position:fixed;bottom:20px;right:20px;background:var(--green);color:white;padding:8px 14px;border-radius:6px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:0.05em;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:999}
+.save-indicator.show{opacity:1}
+.sync-bar{background:var(--maroon3);padding:8px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:8px}
+.sync-left{font-size:11px;color:var(--cream3);display:flex;align-items:center;gap:8px}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--amber);display:inline-block}
+.sync-dot.connected{background:var(--green)}
+.sync-dot.syncing{background:var(--amber);animation:pulse 1s infinite}
+.sync-dot.error{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.sync-btns{display:flex;gap:6px}
+.sync-btn{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;padding:5px 10px;border-radius:4px;border:none;cursor:pointer;background:rgba(255,255,255,0.12);color:var(--cream2)}
+.sync-btn.primary{background:var(--cream);color:var(--maroon3)}
+.banner{background:var(--amber);color:#2a1500;padding:8px 16px;font-size:12px;text-align:center;font-weight:500}
+.pb-flag{background:rgba(46,125,82,0.15);border:1px solid var(--green);color:var(--green);padding:8px 12px;border-radius:6px;font-size:13px;font-weight:600;margin-bottom:12px;display:none}
+.week-summary{background:var(--maroon4);border-radius:8px;padding:14px;margin-bottom:14px}
+.week-summary .ws-title{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:var(--cream2);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px}
+.ws-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.ws-stat{text-align:center}
+.ws-val{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:var(--cream)}
+.ws-lbl{font-size:10px;color:var(--cream3);text-transform:uppercase;letter-spacing:0.05em;margin-top:2px}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="logo">H.O.G</div>
+  <div class="clock-block">
+    <div class="clock-time" id="clock-time">00:00:00</div>
+    <div class="clock-date" id="clock-date">Loading...</div>
+  </div>
+  <div class="meta"><strong>Hugh O Gorman</strong><br>UGBC · Bowside</div>
+</div>
+
+<div class="sync-bar">
+  <div class="sync-left">
+    <span class="sync-dot" id="sync-dot"></span>
+    <span id="sync-status">Not connected to Drive</span>
+  </div>
+  <div class="sync-btns">
+    <button class="sync-btn primary" id="connect-btn" onclick="handleAuthClick()">Connect Drive</button>
+    <button class="sync-btn" onclick="manualSync()" id="sync-now-btn" style="display:none">Sync Now</button>
+    <button class="sync-btn" onclick="exportData()">Export</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('today')">Today</div>
+  <div class="tab" onclick="showTab('schedule')">Schedule</div>
+  <div class="tab" onclick="showTab('goals')">Goals</div>
+  <div class="tab" onclick="showTab('graphs')">Graphs</div>
+  <div class="tab" onclick="showTab('stats')">Stats</div>
+  <div class="tab" onclick="showTab('history')">History</div>
+  <div class="tab" onclick="showTab('prompt')">Coach Prompt</div>
+</div>
+
+<div class="main">
+<div class="content">
+
+<!-- TODAY -->
+<div class="section active" id="tab-today">
+  <div class="page-title" id="today-heading">LOADING...</div>
+  <div class="page-sub" id="today-sub">Loading...</div>
+
+  <div class="week-summary">
+    <div class="ws-title">This Week</div>
+    <div class="ws-grid">
+      <div class="ws-stat"><div class="ws-val" id="ws-sessions">0/11</div><div class="ws-lbl">Sessions</div></div>
+      <div class="ws-stat"><div class="ws-val" id="ws-rpe">—</div><div class="ws-lbl">Avg RPE</div></div>
+      <div class="ws-stat"><div class="ws-val" id="ws-weight">—</div><div class="ws-lbl">Weight</div></div>
+    </div>
+  </div>
+
+  <div class="pb-flag" id="pb-flag"></div>
+
+  <div class="grid2" style="margin-bottom:12px">
+    <div class="session-card scheduled" id="am-card">
+      <div class="s-label">Morning</div>
+      <div class="s-title" id="am-title">Mileage Erg / Water</div>
+      <span class="badge badge-sched" id="am-badge">Scheduled</span>
+    </div>
+    <div class="session-card scheduled" id="pm-card">
+      <div class="s-label">Evening</div>
+      <div class="s-title" id="pm-title">Weights</div>
+      <span class="badge badge-sched" id="pm-badge">Scheduled</span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title" id="log-card-title">Daily Log</div>
+    <div class="row">
+      <div class="field"><label>Weight (kg)</label><input type="number" id="weight" step="0.1" placeholder="75.0" inputmode="decimal"></div>
+      <div class="field"><label>Sleep (hrs)</label><input type="number" id="sleep" step="0.5" placeholder="7.5" inputmode="decimal"></div>
+    </div>
+    <div class="section-head">Morning Session</div>
+    <div class="row">
+      <div class="field"><label>Type</label><select id="am-type"><option value="erg">Erg (UT2)</option><option value="erg-test">Erg Test (2k/6k)</option><option value="water">Water</option><option value="skipped">Skipped</option></select></div>
+      <div class="field"><label>Status</label><select id="am-status"><option value="complete">Completed</option><option value="partial">Partial</option><option value="skipped">Skipped</option></select></div>
+    </div>
+    <div class="row4">
+      <div class="field"><label>Time</label><input type="text" id="am-time" placeholder="60min"></div>
+      <div class="field"><label>Distance</label><input type="text" id="am-dist" placeholder="14km"></div>
+      <div class="field"><label>Avg Split</label><input type="text" id="am-split" placeholder="2:05"></div>
+      <div class="field"><label>Avg Rate</label><input type="text" id="am-rate" placeholder="18spm"></div>
+    </div>
+    <div class="field"><label>AM Notes</label><textarea id="am-notes" placeholder="How did it feel?"></textarea></div>
+    <div class="section-head">Evening Session</div>
+    <div class="row">
+      <div class="field"><label>Type</label><select id="pm-type" onchange="togglePmFields()"><option value="weights">Weights</option><option value="work">Work Session</option><option value="skipped">Skipped</option></select></div>
+      <div class="field"><label>Status</label><select id="pm-status"><option value="complete">Completed</option><option value="partial">Partial</option><option value="skipped">Skipped</option></select></div>
+    </div>
+    <div id="weights-fields">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Lifts pre-fill from your last session. Est. 1RM auto-calculated.</div>
+      <div id="lift-rows"></div>
+      <button class="btn btn-secondary" style="font-size:12px;padding:5px 10px;margin-bottom:10px" onclick="addLiftRow()">+ Add lift</button>
+    </div>
+    <div id="work-fields" style="display:none">
+      <div class="row4">
+        <div class="field"><label>Distance</label><input type="text" id="wk-dist" placeholder="5km"></div>
+        <div class="field"><label>Time</label><input type="text" id="wk-time" placeholder="20min"></div>
+        <div class="field"><label>Avg Split</label><input type="text" id="wk-split" placeholder="1:55"></div>
+        <div class="field"><label>Avg Rate</label><input type="text" id="wk-rate" placeholder="24spm"></div>
+      </div>
+    </div>
+    <div class="field"><label>PM Notes</label><textarea id="pm-notes" placeholder="Lifts, intervals, how it went..."></textarea></div>
+    <div class="row">
+      <div class="field"><label>RPE (1–10)</label><input type="number" id="rpe" min="1" max="10" placeholder="7" inputmode="numeric"></div>
+      <div class="field"><label>Injuries / Niggles</label><input type="text" id="injury" placeholder="e.g. tight lower back"></div>
+    </div>
+    <div class="divider"></div>
+    <div class="inline-flex">
+      <button class="btn btn-primary" onclick="submitLog()">Save Log</button>
+      <button class="btn btn-secondary" onclick="clearForm()">Clear</button>
+    </div>
+  </div>
+  <button class="btn-coach" onclick="getCoachFeedback()">↗ Get Coach Feedback on Today</button>
+  <div class="coach-box" id="coach-box" style="display:none">
+    <div class="coach-label">COACH CLAUDE</div>
+    <div class="coach-response" id="coach-response"></div>
+  </div>
+</div>
+
+<!-- SCHEDULE -->
+<div class="section" id="tab-schedule">
+  <div class="page-title">WEEKLY PROGRAM</div>
+  <div class="page-sub" style="margin-bottom:14px">Standard training week</div>
+  <div class="day-row" id="sched-1"><div class="day-name">Monday<small>AM + PM</small></div><div><span class="pill pill-am">Mileage</span></div><div><span class="pill pill-pm">Weights</span></div></div>
+  <div class="day-row" id="sched-2"><div class="day-name">Tuesday<small>AM + PM</small></div><div><span class="pill pill-am">Mileage</span></div><div><span class="pill pill-pm">Work Session</span></div></div>
+  <div class="day-row" id="sched-3"><div class="day-name">Wednesday<small>AM + PM</small></div><div><span class="pill pill-am">Mileage</span></div><div><span class="pill pill-pm">Weights</span></div></div>
+  <div class="day-row" id="sched-4"><div class="day-name">Thursday<small>AM + PM</small></div><div><span class="pill pill-am">Mileage</span></div><div><span class="pill pill-pm">Work Session</span></div></div>
+  <div class="day-row" id="sched-5"><div class="day-name">Friday<small>AM + PM</small></div><div><span class="pill pill-am">Mileage</span></div><div><span class="pill pill-pm">Weights</span></div></div>
+  <div class="day-row" id="sched-6"><div class="day-name">Saturday<small>AM</small></div><div><span class="pill pill-am">On Water</span></div><div><span style="font-size:11px;color:var(--muted)">Rest PM</span></div></div>
+  <div class="day-row" id="sched-0"><div class="day-name">Sunday<small>Optional</small></div><div><span style="font-size:11px;color:var(--muted)">Optional</span></div><div></div></div>
+  <div class="divider"></div>
+  <div class="card">
+    <div class="card-title">Race Countdowns</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--cream);border-radius:6px;border-left:4px solid var(--maroon);margin-bottom:8px">
+      <div><div style="font-weight:600;font-size:14px">Cork Regatta</div><div style="font-size:11px;color:var(--muted)">June 20–21, 2026</div></div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:var(--maroon)" id="cork-days">—</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--maroon4);border-radius:6px;border-left:4px solid var(--cream)">
+      <div><div style="font-weight:600;font-size:14px;color:var(--cream)">Irish Championships</div><div style="font-size:11px;color:var(--cream3)">July 10–12, 2026</div></div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:var(--cream)" id="champs-days">—</div>
+    </div>
+  </div>
+</div>
+
+<!-- GOALS -->
+<div class="section" id="tab-goals">
+  <div class="page-title">GOALS</div>
+  <div class="page-sub" style="margin-bottom:14px">Season · Pots · Career</div>
+  <div class="section-head">2026 Season</div>
+  <div class="grid2">
+    <div class="goal-card" style="border-left:4px solid var(--maroon)"><div class="goal-cat">Club Division · 2026</div><div class="goal-title">Glenbrook Wine Jug</div><div class="goal-sub">Club 8+ · Irish Champs · July 10–12</div><div class="progress-bar"><div class="progress-fill" style="width:30%"></div></div></div>
+    <div class="goal-card" style="border-left:4px solid var(--maroon)"><div class="goal-cat">Club Division · 2026</div><div class="goal-title">Jack Glazier</div><div class="goal-sub">Club 4+ · Irish Champs · July 10–12</div><div class="progress-bar"><div class="progress-fill" style="width:30%"></div></div></div>
+  </div>
+  <div class="section-head">Senior Division — All Pots</div>
+  <div class="grid3">
+    <div class="goal-card"><div class="goal-cat">Senior</div><div class="goal-title">Senior Challenge Cup</div><div class="goal-sub">Senior 8+</div><div class="progress-bar"><div class="progress-fill" style="width:2%"></div></div></div>
+    <div class="goal-card"><div class="goal-cat">Senior</div><div class="goal-title">W.J Stevens</div><div class="goal-sub">Senior 4-</div><div class="progress-bar"><div class="progress-fill" style="width:2%"></div></div></div>
+    <div class="goal-card"><div class="goal-cat">Senior</div><div class="goal-title">Michael Phelan</div><div class="goal-sub">Senior 2-</div><div class="progress-bar"><div class="progress-fill" style="width:2%"></div></div></div>
+  </div>
+  <div class="section-head">Intermediate Division — All Pots</div>
+  <div class="grid3">
+    <div class="goal-card"><div class="goal-cat">Intermediate</div><div class="goal-title">I.A.R.U Challenge Cup</div><div class="goal-sub">Intermediate 8+</div><div class="progress-bar"><div class="progress-fill" style="width:2%"></div></div></div>
+    <div class="goal-card"><div class="goal-cat">Intermediate</div><div class="goal-title">Paddy Hyland Trophy</div><div class="goal-sub">Intermediate 4+</div><div class="progress-bar"><div class="progress-fill" style="width:2%"></div></div></div>
+    <div class="goal-card"><div class="goal-cat">Intermediate</div><div class="goal-title">Andrew & John O Brien</div><div class="goal-sub">Intermediate 2-</div><div class="progress-bar"><div class="progress-fill" style="width:2%"></div></div></div>
+  </div>
+  <div class="section-head">Club Division — All Pots</div>
+  <div class="grid2">
+    <div class="goal-card"><div class="goal-cat">Club</div><div class="goal-title">Glenbrook Wine Jug</div><div class="goal-sub">Club 8+</div><div class="progress-bar"><div class="progress-fill" style="width:2%"></div></div></div>
+    <div class="goal-card"><div class="goal-cat">Club</div><div class="goal-title">Jack Glazier</div><div class="goal-sub">Club 4+</div><div class="progress-bar"><div class="progress-fill" style="width:2%"></div></div></div>
+  </div>
+  <div class="section-head">Career</div>
+  <div class="grid2">
+    <div class="goal-card"><div class="goal-cat">Career</div><div class="goal-title">Win Henley Royal Regatta</div><div class="goal-sub">University of Galway Boat Club</div><div class="progress-bar"><div class="progress-fill" style="width:2%"></div></div></div>
+    <div class="goal-card"><div class="goal-cat">Career</div><div class="goal-title">Earn an Irish Jersey</div><div class="goal-sub">Any category</div><div class="progress-bar"><div class="progress-fill" style="width:2%"></div></div></div>
+  </div>
+  <div class="section-head">Erg PBs</div>
+  <div class="grid2">
+    <div class="goal-card"><div class="goal-cat">Erg</div><div class="goal-title">2k — drive PB as low as possible</div><div class="goal-sub" id="goal-2k">Current PB: 6:38 · Mar 31, 2026</div><div class="progress-bar"><div class="progress-fill" style="width:45%"></div></div></div>
+    <div class="goal-card"><div class="goal-cat">Erg</div><div class="goal-title">6k — drive PB as low as possible</div><div class="goal-sub" id="goal-6k">Current PB: 21:53.5</div><div class="progress-bar"><div class="progress-fill" style="width:40%"></div></div></div>
+  </div>
+</div>
+
+<!-- GRAPHS -->
+<div class="section" id="tab-graphs">
+  <div class="page-title">GRAPHS</div>
+  <div class="page-sub" style="margin-bottom:14px">All measurable data over time</div>
+  <div class="card"><div class="card-title">2k Erg History</div><div class="chart-wrap"><canvas id="chart2k"></canvas></div></div>
+  <div class="grid2">
+    <div class="card"><div class="card-title">UT2 Avg Split</div><div class="chart-wrap-sm"><canvas id="chartSplit"></canvas></div></div>
+    <div class="card"><div class="card-title">UT2 Avg Rate (spm)</div><div class="chart-wrap-sm"><canvas id="chartRate"></canvas></div></div>
+  </div>
+  <div class="card"><div class="card-title">Mileage Distance per Session (km)</div><div class="chart-wrap"><canvas id="chartDist"></canvas></div></div>
+  <div class="card"><div class="card-title">Work Sessions — Distance (km)</div><div class="chart-wrap"><canvas id="chartWorkDist"></canvas></div></div>
+  <div class="section-head">Strength — Est. 1RM over Time</div>
+  <div class="grid2">
+    <div class="card"><div class="card-title">Bench Press (kg)</div><div class="chart-wrap-sm"><canvas id="chartBench"></canvas></div></div>
+    <div class="card"><div class="card-title">Back Squat (kg)</div><div class="chart-wrap-sm"><canvas id="chartSquat"></canvas></div></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><div class="card-title">Deadlift (kg)</div><div class="chart-wrap-sm"><canvas id="chartDead"></canvas></div></div>
+    <div class="card"><div class="card-title">Shoulder Press (kg)</div><div class="chart-wrap-sm"><canvas id="chartPress"></canvas></div></div>
+  </div>
+  <div class="card"><div class="card-title">Weighted Pull Up — added kg</div><div class="chart-wrap-sm"><canvas id="chartPullup"></canvas></div></div>
+  <div class="card"><div class="card-title">Bodyweight (kg)</div><div class="chart-wrap"><canvas id="chartWeight"></canvas></div></div>
+  <div class="grid2">
+    <div class="card"><div class="card-title">Sleep (hrs)</div><div class="chart-wrap-sm"><canvas id="chartSleep"></canvas></div></div>
+    <div class="card"><div class="card-title">Daily RPE</div><div class="chart-wrap-sm"><canvas id="chartRpe"></canvas></div></div>
+  </div>
+  <div class="card"><div class="card-title">Weekly Consistency — Completed vs Planned</div><div class="chart-wrap"><canvas id="chartConsistency"></canvas></div></div>
+</div>
+
+<!-- STATS -->
+<div class="section" id="tab-stats">
+  <div class="page-title">STATS</div>
+  <div class="page-sub" style="margin-bottom:14px">Current benchmarks</div>
+  <div class="section-head">Erg</div>
+  <div class="grid3">
+    <div class="stat-card"><div class="stat-val" id="stat-2k">6:38</div><div class="stat-lbl">2k PB</div><div class="stat-sub" id="stat-2k-date">Mar 31, 2026</div></div>
+    <div class="stat-card"><div class="stat-val" id="stat-6k">21:53</div><div class="stat-lbl">6k PB</div><div class="stat-sub">Baseline</div></div>
+    <div class="stat-card"><div class="stat-val" id="ut2-stat">—</div><div class="stat-lbl">UT2 Pace</div><div class="stat-sub" id="ut2-date">Log to update</div></div>
+  </div>
+  <div class="section-head">Strength — Est. 1RM</div>
+  <div style="font-size:11px;color:var(--muted);margin-bottom:8px">weight × (1 + reps/30) from last logged set</div>
+  <div class="grid3">
+    <div class="lift-card"><div class="lift-val" id="s-bench">—</div><div class="lift-lbl">Bench Press</div><div class="lift-sub" id="s-bench-sub">No data</div><div class="trend flat" id="t-bench"></div></div>
+    <div class="lift-card"><div class="lift-val" id="s-squat">—</div><div class="lift-lbl">Back Squat</div><div class="lift-sub" id="s-squat-sub">No data</div><div class="trend flat" id="t-squat"></div></div>
+    <div class="lift-card"><div class="lift-val" id="s-dead">—</div><div class="lift-lbl">Deadlift</div><div class="lift-sub" id="s-dead-sub">No data</div><div class="trend flat" id="t-dead"></div></div>
+    <div class="lift-card"><div class="lift-val" id="s-press">—</div><div class="lift-lbl">Shoulder Press</div><div class="lift-sub" id="s-press-sub">No data</div><div class="trend flat" id="t-press"></div></div>
+    <div class="lift-card"><div class="lift-val" id="s-pullup">—</div><div class="lift-lbl">Weighted Pull Up</div><div class="lift-sub" id="s-pullup-sub">No data</div><div class="trend flat" id="t-pullup"></div></div>
+  </div>
+  <div class="section-head">Body</div>
+  <div class="grid3">
+    <div class="stat-card"><div class="stat-val" id="stat-weight">75kg</div><div class="stat-lbl">Weight</div><div class="trend flat" id="t-weight"></div></div>
+    <div class="stat-card"><div class="stat-val">5'7"</div><div class="stat-lbl">Height</div><div class="stat-sub">Static</div></div>
+    <div class="stat-card"><div class="stat-val" id="stat-sleep">—</div><div class="stat-lbl">Last Sleep</div><div class="stat-sub">Log to update</div></div>
+  </div>
+</div>
+
+<!-- HISTORY -->
+<div class="section" id="tab-history">
+  <div class="page-title">LOG HISTORY</div>
+  <div class="page-sub" style="margin-bottom:14px">All past entries — most recent first</div>
+  <div id="history-list"><div style="color:var(--muted);font-size:13px;padding:20px 0;text-align:center">No entries yet — start logging on the Today tab</div></div>
+</div>
+
+<!-- PROMPT -->
+<div class="section" id="tab-prompt">
+  <div class="page-title">COACH PROMPT</div>
+  <div class="page-sub" style="margin-bottom:14px">Paste at the start of any new Claude chat</div>
+  <div class="card">
+    <div class="card-title">Master Coaching Prompt</div>
+    <div class="prompt-text" id="master-prompt">You are Coach Claude — a tough, data-driven rowing performance coach working exclusively with Hugh O Gorman, University of Galway Boat Club. Push Hugh to train harder, hold him accountable daily, help him achieve his goals. Direct, demanding, honest — no softening. Hugh is a full-time law and economics student who works part-time. Context, not excuses.
+
+ATHLETE: Hugh O Gorman, 5'7", bowside, 2nd year, University of Galway Boat Club. Boats: Club 8+, Club 4+.
+
+SEASON 2026: Cork Regatta Jun 20-21 (prep), Irish Rowing Championships Jul 10-12 (A-race).
+
+WEEKLY PROGRAM:
+Mon Mileage+Weights, Tue Mileage+Work, Wed Mileage+Weights, Thu Mileage+Work, Fri Mileage+Weights, Sat Water, Sun optional.
+Mileage = steady state erg/water. Work = intervals/sprints. Weights = Hugh's programme.
+
+2026 TARGETS: Win Glenbrook Wine Jug (Club 8+), Win Jack Glazier (Club 4+).
+ALL 8 POTS LONG-TERM: Senior Challenge Cup (8+), W.J Stevens (4-), Michael Phelan (2-), I.A.R.U Challenge Cup (8+), Paddy Hyland Trophy (4+), Andrew & John O Brien Trophy (2-), Glenbrook Wine Jug (8+), Jack Glazier (4+).
+CAREER: Win Henley Royal Regatta with Galway, earn an Irish jersey.
+ERG: drive 2k PB below 6:38, 6k PB below 21:53.5.
+
+START EACH SESSION asking: weight today, sessions planned vs completed, erg data/results, body status.
+
+RULES: Data first. Call out every missed session. Connect advice to goals. Hugh under-executes — make it urgent. No generic advice. Coach, not therapist.</div>
+    <div style="margin-top:10px"><button class="btn btn-primary" onclick="copyPrompt()">Copy Prompt</button></div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<div class="save-indicator" id="save-indicator">✓ Saved</div>
+
+<script>
+// ════════════ CONFIG ════════════
+const CLIENT_ID = '546868012479-da170ap6obofp63oj2qoii1od5vetl2d.apps.googleusercontent.com';
+const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+const DRIVE_FILENAME = 'hog_rowing_diary_data.json';
+const DB_KEY = 'hog_rowing_diary_v1';
+
+// ════════════ DATA STORE ════════════
+function getDefaultData(){
+  return {logs:[], stats:{ut2Split:null,ut2Date:null,bench:null,benchSub:null,squat:null,squatSub:null,dead:null,deadSub:null,press:null,pressSub:null,pullup:null,pullupSub:null,lastWeight:75,lastSleep:null,pb2k:'6:38',pb2kDate:'Mar 31, 2026',pb6k:'21:53.5'}, lastLifts:{}};
+}
+function loadLocal(){try{const r=localStorage.getItem(DB_KEY);return r?JSON.parse(r):getDefaultData();}catch(e){return getDefaultData();}}
+function saveLocal(){try{localStorage.setItem(DB_KEY,JSON.stringify(DB));}catch(e){}}
+let DB = loadLocal();
+
+function showSaveIndicator(){const el=document.getElementById('save-indicator');el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1500);}
+
+// ════════════ GOOGLE DRIVE SYNC ════════════
+let tokenClient, accessToken=null, driveFileId=null, gisReady=false;
+
+function setSyncStatus(state, text){
+  const dot=document.getElementById('sync-dot');
+  dot.className='sync-dot '+state;
+  document.getElementById('sync-status').textContent=text;
+}
+
+window.onload = function(){
+  const wait=setInterval(()=>{
+    if(window.google && google.accounts && google.accounts.oauth2){
+      clearInterval(wait);
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID, scope: SCOPES,
+        callback: (resp)=>{
+          if(resp.access_token){
+            accessToken=resp.access_token;
+            sessionStorage.setItem('hog_token', accessToken);
+            onConnected();
+          }
+        }
+      });
+      gisReady=true;
+      const saved=sessionStorage.getItem('hog_token');
+      if(saved){accessToken=saved; onConnected(true);}
+    }
+  },200);
+};
+
+function handleAuthClick(){
+  if(!gisReady){alert('Google sign-in still loading, try again in a moment.');return;}
+  tokenClient.requestAccessToken({prompt: accessToken?'':'consent'});
+}
+
+async function onConnected(silent){
+  document.getElementById('connect-btn').style.display='none';
+  document.getElementById('sync-now-btn').style.display='inline-block';
+  setSyncStatus('syncing','Finding your data in Drive...');
+  try{
+    await findOrCreateDriveFile();
+    await pullFromDrive();
+    setSyncStatus('connected','Synced with Drive');
+  }catch(e){
+    setSyncStatus('error','Sync error — using local data');
+    if(!silent) console.error(e);
+  }
+}
+
+async function driveRequest(url, opts={}){
+  opts.headers = Object.assign({Authorization:'Bearer '+accessToken}, opts.headers||{});
+  const res = await fetch(url, opts);
+  if(res.status===401){ // token expired
+    accessToken=null; sessionStorage.removeItem('hog_token');
+    setSyncStatus('error','Session expired — reconnect');
+    document.getElementById('connect-btn').style.display='inline-block';
+    throw new Error('token expired');
+  }
+  return res;
+}
+
+async function findOrCreateDriveFile(){
+  const q=encodeURIComponent("name='"+DRIVE_FILENAME+"' and trashed=false");
+  const res=await driveRequest('https://www.googleapis.com/drive/v3/files?q='+q+'&spaces=drive&fields=files(id,name)');
+  const data=await res.json();
+  if(data.files && data.files.length>0){
+    driveFileId=data.files[0].id;
+  }else{
+    // create folder + file
+    const folderRes=await driveRequest('https://www.googleapis.com/drive/v3/files',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name:'HOG Rowing Diary',mimeType:'application/vnd.google-apps.folder'})
+    });
+    const folder=await folderRes.json();
+    const meta={name:DRIVE_FILENAME, parents:[folder.id]};
+    const createRes=await driveRequest('https://www.googleapis.com/drive/v3/files',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(meta)
+    });
+    const created=await createRes.json();
+    driveFileId=created.id;
+    await pushToDrive();
+  }
+}
+
+async function pullFromDrive(){
+  if(!driveFileId) return;
+  const res=await driveRequest('https://www.googleapis.com/drive/v3/files/'+driveFileId+'?alt=media');
+  const text=await res.text();
+  if(text && text.trim()){
+    try{
+      const remote=JSON.parse(text);
+      if(remote.logs){
+        // Merge: remote wins if it has more or equal logs, else keep local & push
+        if(remote.logs.length >= DB.logs.length){
+          DB=remote; saveLocal();
+        }else{
+          await pushToDrive();
+        }
+        refreshAll();
+      }
+    }catch(e){ await pushToDrive(); }
+  }else{
+    await pushToDrive();
+  }
+}
+
+async function pushToDrive(){
+  if(!driveFileId || !accessToken) return;
+  setSyncStatus('syncing','Saving to Drive...');
+  try{
+    await driveRequest('https://www.googleapis.com/upload/drive/v3/files/'+driveFileId+'?uploadType=media',{
+      method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(DB)
+    });
+    setSyncStatus('connected','Synced with Drive');
+  }catch(e){ setSyncStatus('error','Save failed — saved locally'); }
+}
+
+function manualSync(){ if(accessToken){pullFromDrive().then(pushToDrive);} else {handleAuthClick();} }
+
+function saveData(){ saveLocal(); showSaveIndicator(); if(accessToken && driveFileId){pushToDrive();} }
+
+function exportData(){
+  const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');
+  a.href=url;a.download='HOG_Diary_'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(url);
+}
+
+// ════════════ CLOCK ════════════
+const DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+function updateClock(){const n=new Date();document.getElementById('clock-time').textContent=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0');document.getElementById('clock-date').textContent=DAYS[n.getDay()]+' '+n.getDate()+' '+MONTHS[n.getMonth()]+' '+n.getFullYear();}
+setInterval(updateClock,1000);updateClock();
+
+function getDaysUntil(y,m,d){const n=new Date();n.setHours(0,0,0,0);const t=new Date(y,m-1,d);const diff=Math.ceil((t-n)/(1000*60*60*24));return diff>0?diff:0;}
+
+function updateDynamicContent(){
+  const n=new Date();const dow=n.getDay();
+  [0,1,2,3,4,5,6].forEach(d=>{const el=document.getElementById('sched-'+d);if(el)el.classList.toggle('today-row',d===dow);});
+  const sm={1:{am:'Mileage Erg / Water',pm:'Weights'},2:{am:'Mileage Erg / Water',pm:'Work Session'},3:{am:'Mileage Erg / Water',pm:'Weights'},4:{am:'Mileage Erg / Water',pm:'Work Session'},5:{am:'Mileage Erg / Water',pm:'Weights'},6:{am:'On Water — Boat Session',pm:'Rest'},0:{am:'Optional Session',pm:'Rest'}};
+  const s=sm[dow]||{am:'Rest',pm:'Rest'};
+  document.getElementById('am-title').textContent=s.am;
+  document.getElementById('pm-title').textContent=s.pm;
+  document.getElementById('today-heading').textContent=(DAYS[dow]+', '+MONTHS[n.getMonth()]+' '+n.getDate()).toUpperCase();
+  const cork=getDaysUntil(2026,6,20),champs=getDaysUntil(2026,7,10);
+  const p=[];if(cork>0)p.push(cork+' days to Cork');if(champs>0)p.push(champs+' days to Irish Champs');
+  document.getElementById('today-sub').textContent=p.join(' · ')||'Championship season';
+  document.getElementById('cork-days').textContent=cork>0?cork+' days':'Race day!';
+  document.getElementById('champs-days').textContent=champs>0?champs+' days':'Race day!';
+}
+updateDynamicContent();
+
+// ════════════ TABS ════════════
+function showTab(id){
+  const ids=['today','schedule','goals','graphs','stats','history','prompt'];
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',ids[i]===id));
+  document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id==='tab-'+id));
+  if(id==='graphs')setTimeout(renderCharts,100);
+  if(id==='history')renderHistory();
+  if(id==='stats')refreshStatsDisplay();
+}
+
+// ════════════ FORM ════════════
+function togglePmFields(){const v=document.getElementById('pm-type').value;document.getElementById('weights-fields').style.display=v==='weights'?'block':'none';document.getElementById('work-fields').style.display=v==='work'?'block':'none';}
+
+function liftRowHtml(name,kg,sets){
+  const opts=['Bench Press','Back Squat','Deadlift','Shoulder Press','Weighted Pull Up'].map(o=>`<option ${o===name?'selected':''}>${o}</option>`).join('');
+  return `<div class="field"><label>Lift</label><select class="lift-select"><option value="">Select</option>${opts}</select></div><div class="field"><label>Weight (kg)</label><input type="number" class="lift-kg" placeholder="80" inputmode="decimal" value="${kg||''}"></div><div class="field"><label>Sets × Reps</label><input type="text" class="lift-sets" placeholder="4×5" value="${sets||''}"></div>`;
+}
+function addLiftRow(name,kg,sets){
+  const c=document.getElementById('lift-rows');const div=document.createElement('div');div.className='row3';div.style.marginBottom='8px';
+  div.innerHTML=liftRowHtml(name,kg,sets);c.appendChild(div);
+}
+function prefillLifts(){
+  const c=document.getElementById('lift-rows');c.innerHTML='';
+  const last=DB.lastLifts||{};
+  const names=Object.keys(last);
+  if(names.length===0){addLiftRow();}
+  else{names.forEach(n=>addLiftRow(n,last[n].kg,last[n].sets));}
+}
+
+function calc1RM(kg,reps){return Math.round(kg*(1+reps/30));}
+function parseReps(s){const m=(s||'').match(/(\d+)[×x](\d+)/);return m?parseInt(m[2]):null;}
+
+function loadTodayIntoForm(){
+  const dateKey=new Date().toISOString().slice(0,10);
+  const existing=DB.logs.find(l=>l.date===dateKey);
+  if(existing){
+    document.getElementById('log-card-title').textContent='Daily Log — editing today\u2019s entry';
+    document.getElementById('weight').value=existing.weight||'';
+    document.getElementById('sleep').value=existing.sleep||'';
+    document.getElementById('am-type').value=existing.am.type||'erg';
+    document.getElementById('am-status').value=existing.am.status||'complete';
+    document.getElementById('am-time').value=existing.am.time||'';
+    document.getElementById('am-dist').value=existing.am.dist||'';
+    document.getElementById('am-split').value=existing.am.split||'';
+    document.getElementById('am-rate').value=existing.am.rate||'';
+    document.getElementById('am-notes').value=existing.am.notes||'';
+    document.getElementById('pm-type').value=existing.pm.type||'weights';
+    document.getElementById('pm-status').value=existing.pm.status||'complete';
+    document.getElementById('pm-notes').value=existing.pm.notes||'';
+    document.getElementById('wk-dist').value=existing.pm.wkDist||'';
+    document.getElementById('wk-time').value=existing.pm.wkTime||'';
+    document.getElementById('wk-split').value=existing.pm.wkSplit||'';
+    document.getElementById('wk-rate').value=existing.pm.wkRate||'';
+    document.getElementById('rpe').value=existing.rpe||'';
+    document.getElementById('injury').value=existing.injury||'';
+    togglePmFields();
+    const c=document.getElementById('lift-rows');c.innerHTML='';
+    if(existing.pm.lifts&&existing.pm.lifts.length){existing.pm.lifts.forEach(l=>addLiftRow(l.name,l.kg,l.sets));}
+    else{prefillLifts();}
+    ['am','pm'].forEach(p=>{const s=p==='am'?existing.am.status:existing.pm.status;document.getElementById(p+'-card').className='session-card '+(s==='complete'?'complete':s==='skipped'?'skipped':'scheduled');const b=document.getElementById(p+'-badge');b.className='badge '+(s==='complete'?'badge-done':s==='skipped'?'badge-skip':'badge-sched');b.textContent=s==='complete'?'Completed':s==='skipped'?'Skipped':'Partial';});
+  }else{
+    document.getElementById('log-card-title').textContent='Daily Log';
+    prefillLifts();
+  }
+}
+
+function clearForm(){
+  ['weight','sleep','am-time','am-dist','am-split','am-rate','am-notes','pm-notes','rpe','injury','wk-dist','wk-time','wk-split','wk-rate'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  prefillLifts();
+}
+
+function timeToSec(t){if(!t)return null;const p=t.split(':');if(p.length<2)return null;return parseInt(p[0])*60+parseFloat(p[1]);}
+
+function submitLog(){
+  const now=new Date();const dateKey=now.toISOString().slice(0,10);
+  const amStatus=document.getElementById('am-status').value;
+  const pmStatus=document.getElementById('pm-status').value;
+  const amType=document.getElementById('am-type').value;
+  const lifts=[];const liftMap={'Bench Press':'bench','Back Squat':'squat','Deadlift':'dead','Shoulder Press':'press','Weighted Pull Up':'pullup'};
+  if(!DB.lastLifts)DB.lastLifts={};
+  document.querySelectorAll('.lift-select').forEach((sel,i)=>{
+    const kgs=document.querySelectorAll('.lift-kg');const sets=document.querySelectorAll('.lift-sets');
+    const name=sel.value;const kg=parseFloat(kgs[i].value);const reps=parseReps(sets[i].value);
+    if(name&&kg&&reps){
+      const orm=calc1RM(kg,reps);lifts.push({name,kg,sets:sets[i].value,reps,orm});
+      const key=liftMap[name];
+      if(key){
+        // trend
+        const prev=DB.stats[key]?parseInt(DB.stats[key]):null;
+        DB.stats[key]=orm+'kg';DB.stats[key+'Sub']=kg+'kg × '+reps+' reps';
+        DB.stats[key+'Prev']=prev;
+      }
+      DB.lastLifts[name]={kg:kgs[i].value,sets:sets[i].value};
+    }
+  });
+  const entry={date:dateKey,ts:now.toISOString(),weight:document.getElementById('weight').value,sleep:document.getElementById('sleep').value,
+    am:{type:amType,status:amStatus,time:document.getElementById('am-time').value,dist:document.getElementById('am-dist').value,split:document.getElementById('am-split').value,rate:document.getElementById('am-rate').value,notes:document.getElementById('am-notes').value},
+    pm:{type:document.getElementById('pm-type').value,status:pmStatus,lifts,wkDist:document.getElementById('wk-dist').value,wkTime:document.getElementById('wk-time').value,wkSplit:document.getElementById('wk-split').value,wkRate:document.getElementById('wk-rate').value,notes:document.getElementById('pm-notes').value},
+    rpe:document.getElementById('rpe').value,injury:document.getElementById('injury').value};
+
+  // UT2 pace
+  if(entry.am.split&&amType==='erg'&&amStatus==='complete'){DB.stats.ut2Split=entry.am.split;DB.stats.ut2Date=dateKey;}
+  if(entry.weight){DB.stats.weightPrev=DB.stats.lastWeight;DB.stats.lastWeight=entry.weight;}
+  if(entry.sleep)DB.stats.lastSleep=entry.sleep;
+
+  // PB auto-detect for erg tests
+  let pbMsg='';
+  if(amType==='erg-test'&&entry.am.split&&amStatus==='complete'){
+    // assume distance tells us 2k or 6k
+    const dist=(entry.am.dist||'').toLowerCase();
+    const newSec=timeToSec(entry.am.time)||timeToSec(entry.am.split);
+    if(entry.am.time){
+      const tsec=timeToSec(entry.am.time);
+      if(dist.includes('2k')||dist.includes('2000')){
+        const cur=timeToSec(DB.stats.pb2k);
+        if(tsec&&(!cur||tsec<cur)){DB.stats.pb2k=entry.am.time;DB.stats.pb2kDate=dateKey;pbMsg='NEW 2k PB: '+entry.am.time+'! Previous '+(cur?secToStr(cur):'n/a');}
+      }else if(dist.includes('6k')||dist.includes('6000')){
+        const cur=timeToSec(DB.stats.pb6k);
+        if(tsec&&(!cur||tsec<cur)){DB.stats.pb6k=entry.am.time;pbMsg='NEW 6k PB: '+entry.am.time+'!';}
+      }
+    }
+  }
+
+  DB.logs=DB.logs.filter(l=>l.date!==dateKey);DB.logs.push(entry);
+  DB.logs.sort((a,b)=>b.date.localeCompare(a.date));
+  saveData();
+
+  ['am','pm'].forEach(p=>{const s=p==='am'?amStatus:pmStatus;document.getElementById(p+'-card').className='session-card '+(s==='complete'?'complete':s==='skipped'?'skipped':'scheduled');const b=document.getElementById(p+'-badge');b.className='badge '+(s==='complete'?'badge-done':s==='skipped'?'badge-skip':'badge-sched');b.textContent=s==='complete'?'Completed':s==='skipped'?'Skipped':'Partial';});
+
+  if(pbMsg){const f=document.getElementById('pb-flag');f.textContent='🏆 '+pbMsg;f.style.display='block';}
+  refreshAll();
+  document.getElementById('log-card-title').textContent='Daily Log — editing today\u2019s entry';
+  alert('✓ Logged'+(accessToken?' and synced to Drive.':' and saved locally.'));
+}
+
+function secToStr(s){const m=Math.floor(s/60);const sc=Math.round(s%60);return m+':'+(sc<10?'0':'')+sc;}
+
+function refreshAll(){refreshStatsDisplay();refreshWeekSummary();renderHistory();chartsRendered=false;if(document.getElementById('tab-graphs').classList.contains('active'))renderCharts();}
+
+function refreshStatsDisplay(){
+  const s=DB.stats;
+  document.getElementById('ut2-stat').textContent=s.ut2Split||'—';
+  document.getElementById('ut2-date').textContent=s.ut2Date?'Updated '+s.ut2Date:'Log to update';
+  document.getElementById('stat-2k').textContent=s.pb2k||'6:38';
+  document.getElementById('stat-2k-date').textContent=s.pb2kDate||'Mar 31, 2026';
+  document.getElementById('stat-6k').textContent=(s.pb6k||'21:53.5').replace('.5','');
+  document.getElementById('goal-2k').textContent='Current PB: '+(s.pb2k||'6:38');
+  document.getElementById('goal-6k').textContent='Current PB: '+(s.pb6k||'21:53.5');
+  ['bench','squat','dead','press','pullup'].forEach(k=>{
+    document.getElementById('s-'+k).textContent=s[k]||'—';
+    document.getElementById('s-'+k+'-sub').textContent=s[k+'Sub']||'No data';
+    const tEl=document.getElementById('t-'+k);
+    if(s[k]&&s[k+'Prev']){const cur=parseInt(s[k]);const prev=s[k+'Prev'];if(cur>prev){tEl.textContent='▲ +'+(cur-prev)+'kg';tEl.className='trend up';}else if(cur<prev){tEl.textContent='▼ '+(cur-prev)+'kg';tEl.className='trend down';}else{tEl.textContent='– no change';tEl.className='trend flat';}}
+  });
+  if(s.lastWeight){document.getElementById('stat-weight').textContent=s.lastWeight+'kg';
+    const tw=document.getElementById('t-weight');
+    if(s.weightPrev){const c=parseFloat(s.lastWeight),pv=parseFloat(s.weightPrev);if(c>pv){tw.textContent='▲ +'+(c-pv).toFixed(1)+'kg';tw.className='trend up';}else if(c<pv){tw.textContent='▼ '+(c-pv).toFixed(1)+'kg';tw.className='trend down';}else{tw.textContent='– steady';tw.className='trend flat';}}
+  }
+  if(s.lastSleep)document.getElementById('stat-sleep').textContent=s.lastSleep+'h';
+}
+
+function refreshWeekSummary(){
+  const now=new Date();const monday=new Date(now);monday.setDate(now.getDate()-((now.getDay()+6)%7));monday.setHours(0,0,0,0);
+  const wkLogs=DB.logs.filter(l=>new Date(l.date)>=monday);
+  let completed=0;const rpes=[];const weights=[];
+  wkLogs.forEach(l=>{if(l.am.status==='complete'||l.am.status==='partial')completed++;if(l.pm.status==='complete'||l.pm.status==='partial')completed++;if(l.rpe)rpes.push(parseFloat(l.rpe));if(l.weight)weights.push(parseFloat(l.weight));});
+  document.getElementById('ws-sessions').textContent=completed+'/11';
+  document.getElementById('ws-rpe').textContent=rpes.length?(rpes.reduce((a,b)=>a+b,0)/rpes.length).toFixed(1):'—';
+  document.getElementById('ws-weight').textContent=weights.length?weights[weights.length-1]+'kg':(DB.stats.lastWeight?DB.stats.lastWeight+'kg':'—');
+}
+
+function renderHistory(){
+  const c=document.getElementById('history-list');
+  if(DB.logs.length===0){c.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px 0;text-align:center">No entries yet — start logging on the Today tab</div>';return;}
+  c.innerHTML=DB.logs.map(log=>{
+    const ai=log.am.status==='complete'?'✓':log.am.status==='skipped'?'✕':'~';
+    const pi=log.pm.status==='complete'?'✓':log.pm.status==='skipped'?'✕':'~';
+    const ac=log.am.status==='complete'?'var(--green)':log.am.status==='skipped'?'var(--red)':'var(--amber)';
+    const pc=log.pm.status==='complete'?'var(--green)':log.pm.status==='skipped'?'var(--red)':'var(--amber)';
+    const ls=log.pm.lifts&&log.pm.lifts.length?log.pm.lifts.map(l=>l.name+' '+l.orm+'kg').join(', '):'';
+    return `<div class="card" style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:var(--maroon)">${log.date}</div><div style="display:flex;gap:8px;font-size:12px">${log.weight?'<span style="color:var(--muted)">'+log.weight+'kg</span>':''}${log.sleep?'<span style="color:var(--muted)">'+log.sleep+'h</span>':''}${log.rpe?'<span style="color:var(--muted)">RPE '+log.rpe+'</span>':''}</div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px"><div style="background:var(--cream);border-radius:5px;padding:8px"><div style="color:var(--muted);font-size:10px;text-transform:uppercase;margin-bottom:4px">AM · ${log.am.type}</div><div style="color:${ac};font-weight:600">${ai} ${log.am.status}</div>${log.am.dist?'<div>'+log.am.dist+'</div>':''}${log.am.split?'<div>'+log.am.split+' /500m</div>':''}${log.am.rate?'<div>'+log.am.rate+'</div>':''}${log.am.notes?'<div style="color:var(--muted);margin-top:4px">'+log.am.notes+'</div>':''}</div><div style="background:var(--cream);border-radius:5px;padding:8px"><div style="color:var(--muted);font-size:10px;text-transform:uppercase;margin-bottom:4px">PM · ${log.pm.type}</div><div style="color:${pc};font-weight:600">${pi} ${log.pm.status}</div>${ls?'<div style="margin-top:4px">'+ls+'</div>':''}${log.pm.wkDist?'<div>'+log.pm.wkDist+'</div>':''}${log.pm.notes?'<div style="color:var(--muted);margin-top:4px">'+log.pm.notes+'</div>':''}</div></div>${log.injury?'<div style="margin-top:6px;font-size:11px;color:var(--red)">⚠ '+log.injury+'</div>':''}</div>`;
+  }).join('');
+}
+
+// ════════════ COACH ════════════
+async function getCoachFeedback(){
+  const box=document.getElementById('coach-box');const resp=document.getElementById('coach-response');
+  box.style.display='block';resp.innerHTML='<div class="loading-dots"><span></span><span></span><span></span></div>';
+  const cork=getDaysUntil(2026,6,20),champs=getDaysUntil(2026,7,10);
+  const g=id=>document.getElementById(id).value;
+  const liftParts=[];
+  document.querySelectorAll('.lift-select').forEach((sel,i)=>{const kgs=document.querySelectorAll('.lift-kg');const sets=document.querySelectorAll('.lift-sets');if(sel.value&&kgs[i].value&&sets[i].value){const reps=parseReps(sets[i].value);const orm=reps?calc1RM(parseFloat(kgs[i].value),reps):null;liftParts.push(sel.value+': '+kgs[i].value+'kg × '+sets[i].value+(orm?' (1RM '+orm+'kg)':''));}});
+  const prompt=`You are Coach Claude — tough, data-driven rowing coach for Hugh O Gorman (University of Galway Boat Club, bowside, 5'7"). ${champs} days to Irish Rowing Championships — must win Club 8+ (Glenbrook Wine Jug) and Club 4+ (Jack Glazier). ${cork} days to Cork Regatta. 2k PB ${DB.stats.pb2k||'6:38'}, 6k PB ${DB.stats.pb6k||'21:53.5'}. Hugh chronically under-trains. No mercy on missed sessions.
+
+Today: Weight ${g('weight')||'?'}kg, Sleep ${g('sleep')||'?'}hrs. AM (${g('am-type')}): ${g('am-status')}, ${g('am-dist')||'?'} ${g('am-split')||''} ${g('am-rate')||''}, notes: ${g('am-notes')||'none'}. PM (${g('pm-type')}): ${g('pm-status')}, lifts: ${liftParts.join(' | ')||'none'}, notes: ${g('pm-notes')||'none'}. RPE ${g('rpe')||'?'}/10. Injuries: ${g('injury')||'none'}.
+
+Sharp, specific feedback. Call out concerns. Connect to goals. End with tomorrow's priority. Max 200 words.`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();resp.textContent=data.content.map(b=>b.text||'').join('');
+  }catch(e){resp.textContent='Could not reach coach. The AI coach only works when opened from the live web address, not a local file. Check your connection.';}
+}
+
+function copyPrompt(){navigator.clipboard.writeText(document.getElementById('master-prompt').innerText).then(()=>alert('Prompt copied.'));}
+
+// ════════════ CHARTS ════════════
+let chartsRendered=false;let chartInstances={};
+function renderCharts(){
+  const maroon='#7a1840',blue='#1a5276',green='#2e7d52',red='#c0392b',amber='#b8860b',muted='#9b7080',cream2='#ede5db';
+  const base={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#3d0a20',titleColor:'#f5f0eb',bodyColor:'#d9cfc4'}},scales:{x:{grid:{color:cream2},ticks:{color:muted,font:{size:9}}},y:{grid:{color:cream2},ticks:{color:muted,font:{size:9}}}}};
+  function tSec(t){if(!t)return null;const p=t.split(':');if(p.length<2)return null;return parseInt(p[0])*60+parseFloat(p[1]);}
+  function sStr(s){const m=Math.floor(s/60);const sc=Math.round(s%60);return m+':'+(sc<10?'0':'')+sc;}
+  function dc(id,cfg){if(chartInstances[id])chartInstances[id].destroy();const el=document.getElementById(id);if(el)chartInstances[id]=new Chart(el,cfg);}
+
+  // 2k baseline + logged tests
+  const logs=[...DB.logs].reverse();
+  const testLogs=logs.filter(l=>l.am.type==='erg-test'&&l.am.status==='complete'&&l.am.time&&(l.am.dist||'').toLowerCase().includes('2k'));
+  let ergLabels=['Jan 22','Mar 24','Mar 31'],ergData=[tSec('6:40'),tSec('6:50'),tSec('6:38')],ergCol=[blue,red,green];
+  testLogs.forEach(l=>{ergLabels.push(l.date.slice(5));ergData.push(tSec(l.am.time));ergCol.push(maroon);});
+  dc('chart2k',{type:'line',data:{labels:ergLabels,datasets:[{data:ergData,borderColor:maroon,backgroundColor:'rgba(122,24,64,0.08)',tension:0.3,pointBackgroundColor:ergCol,pointRadius:6,fill:true}]},options:{...base,scales:{...base.scales,y:{...base.scales.y,reverse:true,ticks:{...base.scales.y.ticks,callback:v=>sStr(v)}}},plugins:{...base.plugins,tooltip:{...base.plugins.tooltip,callbacks:{label:c=>sStr(c.raw)}}}}});
+
+  const ergLogs=logs.filter(l=>l.am.type==='erg'&&l.am.status==='complete'&&l.am.split);
+  const workLogs=logs.filter(l=>l.pm.type==='work'&&l.pm.status==='complete');
+  const mileLogs=logs.filter(l=>(l.am.type==='erg'||l.am.type==='water')&&l.am.status==='complete'&&l.am.dist);
+  const weightLogs=logs.filter(l=>l.weight);const sleepLogs=logs.filter(l=>l.sleep);const rpeLogs=logs.filter(l=>l.rpe);
+  function liftLogs(name){return logs.filter(l=>l.pm.lifts&&l.pm.lifts.some(lf=>lf.name===name));}
+  function liftOrm(log,name){const lf=log.pm.lifts.find(l=>l.name===name);return lf?lf.orm:null;}
+
+  function plot(id,dataArr,labels,type,color,opts={}){
+    const has=dataArr.length>0;
+    const cfg=type==='bar'?{type:'bar',data:{labels:has?labels:['Log to populate'],datasets:[{data:has?dataArr:[null],backgroundColor:color,borderRadius:3}]},options:base}:{type:'line',data:{labels:has?labels:['Log to populate'],datasets:[{data:has?dataArr:[null],borderColor:color,tension:0.3,pointRadius:4,fill:opts.fill||false,backgroundColor:opts.bg||'transparent'}]},options:{...base,...(opts.extra||{})}};
+    dc(id,cfg);
+  }
+  plot('chartSplit',ergLogs.map(l=>tSec(l.am.split)),ergLogs.map(l=>l.date.slice(5)),'line',maroon,{extra:{scales:{...base.scales,y:{...base.scales.y,reverse:true,ticks:{...base.scales.y.ticks,callback:v=>v?sStr(v):'—'}}}}});
+  plot('chartRate',ergLogs.map(l=>parseInt(l.am.rate)||null),ergLogs.map(l=>l.date.slice(5)),'line',blue);
+  plot('chartDist',mileLogs.map(l=>parseFloat(l.am.dist)||null),mileLogs.map(l=>l.date.slice(5)),'bar','rgba(122,24,64,0.7)');
+  plot('chartWorkDist',workLogs.map(l=>parseFloat(l.pm.wkDist)||null),workLogs.map(l=>l.date.slice(5)),'bar','rgba(184,134,11,0.7)');
+  [['Bench Press','chartBench',green],['Back Squat','chartSquat',maroon],['Deadlift','chartDead',red],['Shoulder Press','chartPress',blue],['Weighted Pull Up','chartPullup',amber]].forEach(([n,id,c])=>{const ll=liftLogs(n);plot(id,ll.map(l=>liftOrm(l,n)),ll.map(l=>l.date.slice(5)),'line',c);});
+  plot('chartWeight',weightLogs.map(l=>parseFloat(l.weight)),weightLogs.map(l=>l.date.slice(5)),'line',maroon,{fill:true,bg:'rgba(122,24,64,0.06)'});
+  plot('chartSleep',sleepLogs.map(l=>parseFloat(l.sleep)),sleepLogs.map(l=>l.date.slice(5)),'bar','rgba(26,82,118,0.6)');
+  plot('chartRpe',rpeLogs.map(l=>parseInt(l.rpe)),rpeLogs.map(l=>l.date.slice(5)),'line',red,{extra:{scales:{...base.scales,y:{...base.scales.y,min:1,max:10}}}});
+
+  const wkMap={};
+  logs.forEach(l=>{const d=new Date(l.date);const wk=new Date(d);wk.setDate(d.getDate()-((d.getDay()+6)%7));const k=wk.toISOString().slice(0,10);if(!wkMap[k])wkMap[k]={c:0,p:11};if(l.am.status==='complete'||l.am.status==='partial')wkMap[k].c++;if(l.pm.status==='complete'||l.pm.status==='partial')wkMap[k].c++;});
+  const wks=Object.keys(wkMap).sort();
+  dc('chartConsistency',{type:'bar',data:{labels:wks.length?wks:['Log to populate'],datasets:[{label:'Planned',data:wks.map(k=>wkMap[k].p),backgroundColor:'rgba(122,24,64,0.2)',borderRadius:3},{label:'Completed',data:wks.map(k=>wkMap[k].c),backgroundColor:'rgba(122,24,64,0.8)',borderRadius:3}]},options:{...base,plugins:{...base.plugins,legend:{display:true,labels:{color:muted,font:{size:10}}}}}});
+  chartsRendered=true;
+}
+
+// ════════════ INIT ════════════
+loadTodayIntoForm();
+refreshStatsDisplay();
+refreshWeekSummary();
+</script>
+</body>
+</html>
